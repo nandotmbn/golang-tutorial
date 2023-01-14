@@ -37,7 +37,7 @@ Seperti biasa, kita akan coba menulis kode "Hello World"
     package main
 
     func main() {
-      print("OKE")
+      print("Hello World")
     }
    ```
 
