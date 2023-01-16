@@ -1,19 +1,20 @@
 package main
 
 import (
-	// "tutorial/function"
-	// multiple "tutorial/function/multiple"
-	// "tutorial/function/substract"
+	"tutorial/configs"
+	"tutorial/routes"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	router := gin.Default()
+	configs.ConnectDB()
 
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(200, "Hello World")
-	})
+	v1 := router.Group("/v1")
 
-	router.Run("localhost:6000")
+	routes.ThingsRoute(v1)
+	routes.PointRoute(v1)
+
+	router.Run("localhost:8080")
 }
