@@ -11,13 +11,12 @@ import (
 )
 
 func ConnectDB() *mongo.Client {
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://orlandosykes:orlandosykes@technorcluster.0ayow.mongodb.net"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
 		log.Fatal(err)
@@ -32,10 +31,11 @@ func ConnectDB() *mongo.Client {
 	return client
 }
 
+// Client instance
 var DB *mongo.Client = ConnectDB()
 
 // getting database collections
 func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
-	collection := client.Database("VehicleTracker").Collection(collectionName)
+	collection := client.Database("WaterQuality").Collection(collectionName)
 	return collection
 }

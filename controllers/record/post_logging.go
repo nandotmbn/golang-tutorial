@@ -1,7 +1,11 @@
 package controller_point
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 	"tutorial/configs"
@@ -16,29 +20,31 @@ import (
 
 var validate = validator.New()
 
-var pointsCollection = configs.GetCollection(configs.DB, "points")
-var thingsCollection = configs.GetCollection(configs.DB, "things")
+var pointsCollection = configs.GetCollection(configs.DB, "record")
+var meterCollection = configs.GetCollection(configs.DB, "meter")
 
-func PointLogging() gin.HandlerFunc {
+func RecordLogging() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		var pointPayload views.PayloadPoint
 		defer cancel()
-		var thingsId = c.Param("things_id")
+		var meterId = c.Param("meter_id")
 		c.BindJSON(&pointPayload)
+
+		fmt.Println(pointPayload)
 
 		if validationErr := validate.Struct(&pointPayload); validationErr != nil {
 			c.JSON(http.StatusBadRequest, bson.M{"data": validationErr.Error()})
 			return
 		}
 
-		thingsIdObj, err := primitive.ObjectIDFromHex(thingsId)
+		meterIdObj, err := primitive.ObjectIDFromHex(meterId)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, bson.M{"data": err.Error()})
 			return
 		}
 
-		count, err_ := thingsCollection.CountDocuments(ctx, bson.M{"_id": thingsIdObj})
+		count, err_ := meterCollection.CountDocuments(ctx, bson.M{"_id": meterIdObj})
 
 		if err_ != nil {
 			c.JSON(http.StatusInternalServerError, bson.M{"data": "Internal server error"})
@@ -50,11 +56,12 @@ func PointLogging() gin.HandlerFunc {
 			return
 		}
 
-		newPoint := models.Point{
-			ThingsId:  thingsIdObj,
-			Latitude:  pointPayload.Latitude,
-			Longitude: pointPayload.Longitude,
-			Velocity:  pointPayload.Velocity,
+		newPoint := models.Record{
+			MeterId:     meterIdObj,
+			Acidity:     pointPayload.Acidity,
+			Salinity:    pointPayload.Salinity,
+			Temperature: pointPayload.Temperature,
+			CreatedAt:   time.Now().UTC(),
 		}
 
 		result, err := pointsCollection.InsertOne(ctx, newPoint)
@@ -64,11 +71,19 @@ func PointLogging() gin.HandlerFunc {
 		}
 
 		finalView := views.FinalPoint{
-			Id:        result.InsertedID,
-			Latitude:  pointPayload.Latitude,
-			Longitude: pointPayload.Longitude,
-			Velocity:  pointPayload.Velocity,
+			Id:          result.InsertedID,
+			Acidity:     pointPayload.Acidity,
+			Salinity:    pointPayload.Salinity,
+			Temperature: pointPayload.Temperature,
+			CreatedAt:   time.Now(),
 		}
+
+		json_data, err__ := json.Marshal(finalView)
+		if err__ != nil {
+			log.Fatal("FUCJK")
+		}
+
+		http.Post("https://gdsc-pens-iot-listener-lxz6xwlfka-et.a.run.app/good-ponds/"+meterId, "application/json", bytes.NewBuffer(json_data))
 
 		c.JSON(http.StatusCreated, bson.M{
 			"status":  http.StatusCreated,

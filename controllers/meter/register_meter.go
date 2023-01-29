@@ -17,12 +17,12 @@ import (
 
 var validate = validator.New()
 
-var thingsCollection *mongo.Collection = configs.GetCollection(configs.DB, "things")
+var thingsCollection *mongo.Collection = configs.GetCollection(configs.DB, "meter")
 
-func RegisterThings() gin.HandlerFunc {
+func RegisterMeter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		var things models.Things
+		var things models.Meter
 		defer cancel()
 		c.BindJSON(&things)
 
@@ -31,7 +31,7 @@ func RegisterThings() gin.HandlerFunc {
 			return
 		}
 
-		count, err_ := thingsCollection.CountDocuments(ctx, bson.M{"things_name": things.Thingname})
+		count, err_ := thingsCollection.CountDocuments(ctx, bson.M{"meter_name": things.MeterName})
 
 		if err_ != nil {
 			c.JSON(http.StatusInternalServerError, bson.M{"data": "Internal server error"})
@@ -48,8 +48,8 @@ func RegisterThings() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, bson.M{"data": "Password tidak valid"})
 		}
 
-		newThings := models.Things{
-			Thingname: things.Thingname,
+		newThings := models.Meter{
+			MeterName: things.MeterName,
 			Password:  string(bytes),
 			CreatedAt: time.Now(),
 		}
@@ -60,9 +60,9 @@ func RegisterThings() gin.HandlerFunc {
 			return
 		}
 
-		finalView := views.ThingsView{
-			ThingsId:  result.InsertedID,
-			Thingname: things.Thingname,
+		finalView := views.MeterView{
+			MeterId:   result.InsertedID,
+			MeterName: things.MeterName,
 		}
 
 		c.JSON(http.StatusCreated, bson.M{

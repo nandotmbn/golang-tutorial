@@ -12,7 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func GetIdThings() gin.HandlerFunc {
+func GetIdMeter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		var thingPayload views.PayloadRetriveId
@@ -24,9 +24,9 @@ func GetIdThings() gin.HandlerFunc {
 			return
 		}
 
-		var resultThings models.Things
+		var resultThings models.Meter
 		var finalPayload views.FinalRetriveId
-		result := thingsCollection.FindOne(ctx, bson.M{"things_name": thingPayload.Thingname})
+		result := thingsCollection.FindOne(ctx, bson.M{"meter_name": thingPayload.MeterName})
 		result.Decode(&resultThings)
 		result.Decode(&finalPayload)
 		err := bcrypt.CompareHashAndPassword([]byte(resultThings.Password), []byte(thingPayload.Password))
